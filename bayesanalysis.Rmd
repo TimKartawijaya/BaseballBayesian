@@ -1,0 +1,46 @@
+---
+title: "Bayesian Analysis using Stan on Baseball Data"
+output: html_notebook
+---
+
+Below I attempt to estimate player ability parameters using Stan.
+
+First we load the necessary library packages.
+```{r, echo=FALSE, include=FALSE}      
+library(rstan)
+library(shinystan)
+library(tidyverse)
+```
+
+Then we implement the stan model. 
+```{r, echo=FALSE, include=FALSE}
+#book model with pithcers, beta priors to usse alpha and beta parameter
+#uninformative priors 
+#transformed parameters block to create mean, standard deviation of beta distributions
+#posterior has standard deviations
+#write out model 
+
+#bb = bb %>% mutate(batavg = ifelse(batavg ==0, 0.0001,batavg))
+
+ball_data = read.csv("BattingAverage.csv")
+S = length(unique(ball_data$PlayerNumber))
+P = length(unique(ball_data$PriPosNumber))
+
+#Stan options I always use
+rstan_options(auto_write = T) #write out model results in same directory
+options(mc.cores = parallel::detectCores()) #uses 4 cores for 4 chains
+stan_model(file = 'ballStanKruschke.stan')
+#4 chains
+#2000 iter per chain
+#1000 warmup
+fit = stan(file = 'ballStanKruschke.stan', data= list(y = ball_data$Hits, s = ball_data$PriPosNumber, atbats = ball_data$AtBats, S=S,P=P))
+
+saveRDS(fit, file = "shinybaseball.rds")
+```
+
+We saved our stan model into shinybaseball.rds, which we can pull up with the code below
+```{r}
+fitFinal = readRDS("shinybaseball.rds")
+sso_fit = as.shinystan(fitFinal)
+launch_shinystan(sso_fit)
+```

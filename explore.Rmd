@@ -1,0 +1,87 @@
+---
+title: "Bayesian Baseball"
+output:
+  pdf_document: default
+  html_notebook: default
+---
+
+First, we load the necessary library packages.
+```{r, echo=FALSE, include = FALSE}
+library(tidyverse)
+fill = "#4271AE"; line = "#1F3552"
+```
+
+Below is some exploratory data analysis.
+
+I did some summary statistics on the data by position.
+```{r}
+ball_data = read.csv("BattingAverage.csv")
+
+#mean statistics on hit rate of positions
+ball_data %>%
+  group_by(PriPos) %>%
+  summarise(
+    avg_atbats = mean(Hits),
+    sd_atbats = sd(Hits),
+    avg_hits = mean(AtBats),
+    sd_hits = sd(AtBats),
+    avg_hitrate = mean(Hits/AtBats),
+    sd_hitrate = sd(Hits/AtBats)
+)
+
+#histograms show you the shape of distributions 
+#boxplots help you compare between positions
+
+#Standard deviations 
+
+#count how many positions are in data
+ball_data %>%
+  count(PriPos)
+```
+
+```{r}
+#count of the number of positions in the data
+ggplot(data = ball_data) + geom_bar(mapping = aes(x = PriPos)) + ggtitle("Number of Positions in Data")
+```
+Compared to the other positions, there are much more pitcher data in the baseball dataset. 
+
+```{r}
+#distribution of average hit rate according to position 
+ggplot(data = ball_data) + geom_boxplot(mapping = aes(x = PriPos, y = Hits/AtBats), fill= fill, color =  line) + ggtitle("Hit Rate of Each Position") + xlab("Position") +ylab("Hit Rate")
+#one pitcher at 1 due to lack of atbats
+```
+
+```{r}
+#distribution of at bats according to position
+ggplot(data = ball_data) + geom_boxplot(mapping = aes(x = PriPos, y = AtBats)) + ggtitle("AtBats of each Position")
+```
+
+```{r}
+#distribution of hits according to position
+ggplot(data = ball_data) + geom_boxplot(mapping = aes(x = PriPos, y = Hits))
+```
+From the two graphs above, we can see that, compared with other positions, pitchers have a low hit rate due to their lack of chances atbats and low hits. 
+
+```{r}
+#comparison between at bats with hit rate
+ggplot(data = ball_data) + geom_point(mapping = aes(x = AtBats, y = Hits/AtBats)) + facet_wrap(~PriPos)
+
+```
+Even when players have more chance at bats, their hit rate does not increase. 
+
+```{r}
+#correlation between data
+dat_catcher = filter(ball_data, PriPos == "Catcher")
+dat_leftfield = filter(ball_data, PriPos == "Left Field")
+dat_shortstop = filter(ball_data, PriPos == "Shortstop")
+rcorr(as.matrix(cbind(dat_catcher$Hits, dat_leftfield$Hits, dat_shortstop$Hits)))
+
+#At the end make observations
+```
+Below is some code to help in analyzing patterns
+```{r}
+#find pitcher with zero hits
+zero = filter(ball_data, Hits == 0 & PriPos == "Pitcher")
+#find pitcher with 100% hit rate
+perfect = filter(ball_data, Hits/AtBats == 1 & PriPos == "Pitcher")
+```
